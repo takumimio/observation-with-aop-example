@@ -1,0 +1,40 @@
+version: '3.8'  # or any other version you are using
+
+services:
+  otelcollector:
+    image: otel/opentelemetry-collector
+    container_name: otelcollector
+    volumes:
+      - "./otel/otel-collector-config.yaml:/otel-config.yaml"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "4318:4318"
+    networks:
+      otel-jaeger-network:
+        aliases:
+          - otelcollector
+    command: --config otel-config.yaml
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    environment:
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - COLLECTOR_OTLP_ENABLED=true
+    ports:
+      - "16686:16686"
+    networks:
+      otel-jaeger-network:
+        aliases:
+          - jaeger
+
+  redis:
+    image: redis:6.2.6
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+networks:
+  otel-jaeger-network:
+    external: true
